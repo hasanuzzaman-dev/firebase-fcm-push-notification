@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.hasan.firebasepushnotification">
-    
-    <!--<uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>-->
-
+    <!--
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
+    -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 
@@ -15,22 +15,24 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FIREBASEPUSHNOTIFICATION">
-<!--
+        <activity android:name=".SignUpActivity"></activity>
+        <activity android:name=".SignInActivity" />
+        <!--
         <service android:name=".FirebaseService"
             android:permission="com.google.android.c2dm.permission.SEND">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE"/>
             </intent-filter>
-        </service>-->
-
-        <service android:name=".FirebaseService"
+        </service>
+        -->
+        <service
+            android:name=".FirebaseService"
             android:permission="com.google.android.c2dm.permission.SEND">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
             </intent-filter>
-
         </service>
 
         <activity android:name=".MainActivity">
