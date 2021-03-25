@@ -1,101 +1,122 @@
-package com.hasan.firebasepushnotification;
+package com.hasan.firebasepushnotification
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.Toast;
+import android.content.Intent
+import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.ktx.messaging
+import com.hasan.firebasepushnotification.model.User
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_sign_up.*
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.material.button.MaterialButton;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.hasan.firebasepushnotification.model.User;
+class SignUpActivity : AppCompatActivity() {
 
-public class SignUpActivity extends AppCompatActivity {
+    private var mAuth: FirebaseAuth? = null
+    private var user: User? = null
+    var database: FirebaseDatabase? = null
 
-    private EditText nameET, emailET, passwordET;
-    private FirebaseAuth mAuth;
-    private static final String TAG = "SignUpActivity";
-    private User user;
-    FirebaseDatabase database;
-    private MaterialButton signUpBtn;
+    private var userToken: String? = null
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sign_up);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_sign_up)
 
-        mAuth = FirebaseAuth.getInstance();
-        database = FirebaseDatabase.getInstance();
-        DatabaseReference userRef = database.getReference("user");
-        user = new User();
+        mAuth = FirebaseAuth.getInstance()
+        database = FirebaseDatabase.getInstance()
+        val userRef = database!!.getReference("user")
+        user = User()
 
-        initViews();
 
-        signUpBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String name = nameET.getText().toString();
-                String email = emailET.getText().toString();
-                String password = passwordET.getText().toString();
 
-                mAuth.createUserWithEmailAndPassword(email, password)
-                        .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                            @Override
-                            public void onComplete(@NonNull Task<AuthResult> task) {
-                                if (task.isSuccessful()) {
+        signUpBtn.setOnClickListener {
 
-                                    FirebaseUser firebaseUser = mAuth.getCurrentUser();
+            val name = nameET.text.toString()
+            val email = emailET.text.toString()
+            val password = passwordET.text.toString()
 
-                                    user.setName(name);
-                                    user.setEmail(email);
-                                    user.setId(firebaseUser.getUid());
-                                    user.setPassword(password);
 
-                                    userRef.child(firebaseUser.getUid()).setValue(user)
-                                            .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<Void> task) {
-                                                    if (task.isSuccessful()){
-                                                        Toast.makeText(SignUpActivity.this, "Successful", Toast.LENGTH_SHORT).show();
-                                                        Intent intent= new Intent(SignUpActivity.this, MainActivity.class);
-                                                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                                        startActivity(intent);
-                                                    }
-                                                }
-                                            });
-                                } else {
-                                    // If sign in fails, display a message to the user.
-                                    Log.w(TAG, "createUserWithEmail:failure", task.getException());
-                                    Toast.makeText(SignUpActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+            /*FirebaseInstanceId.getInstance().instanceId.addOnSuccessListener {
+                FirebaseService.token = it.token
+                //etToken.setText(it.token)
+                userToken = it.token
+                Log.d(TAG, "token: ${it.token}")
+            }
+            FirebaseMessaging.getInstance().subscribeToTopic(TOPIC)*/
+
+
+            Firebase.messaging.subscribeToTopic(TOPIC)
+                .addOnCompleteListener{task ->
+                    if (task.isSuccessful){
+                        Log.d(TAG, "Topic Created")
+                    }else{
+                        Log.d(TAG, "Topic Not Created")
+                    }
+                }
+
+
+            Firebase.messaging.token.addOnCompleteListener(OnCompleteListener { task ->
+
+                if (!task.isSuccessful) {
+                    Log.w(TAG, "Fetching FCM registration token failed", task.exception)
+                    return@OnCompleteListener
+                }
+
+                // Get new FCM registration token
+                userToken = task.result
+
+                Log.d(TAG, "Token: $userToken")
+
+                // Log and toast
+
+
+            })
+
+
+
+
+
+
+            mAuth!!.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Log.d(TAG, "Auth: started")
+                        val firebaseUser = mAuth!!.currentUser
+                        user!!.name = name
+                        user!!.email = email
+                        user!!.id = firebaseUser.uid
+                        user!!.password = password
+                        user!!.token = userToken
+
+
+                        userRef.child(firebaseUser.uid).setValue(user)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    Log.d(TAG, "DB: started")
+                                    Toast.makeText(this@SignUpActivity, "Successful", Toast.LENGTH_SHORT).show()
+
+                                    val intent = Intent(this@SignUpActivity, MainActivity::class.java)
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                    startActivity(intent)
                                 }
                             }
-                        });
-            }
-        });
-
-
-    }
-
-    private void initViews() {
-        nameET = findViewById(R.id.nameET);
-        emailET = findViewById(R.id.emailET);
-        passwordET = findViewById(R.id.passwordET);
-        signUpBtn = findViewById(R.id.signUpBtn);
-
-
-
+                    } else {
+                        // If sign in fails, display a message to the user.
+                        Log.w(TAG, "createUserWithEmail:failure", task.exception)
+                        Toast.makeText(this@SignUpActivity, "Authentication failed.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+        }
     }
 
 
+
+    companion object {
+        private const val TAG = "SignUpActivity"
+    }
 }
