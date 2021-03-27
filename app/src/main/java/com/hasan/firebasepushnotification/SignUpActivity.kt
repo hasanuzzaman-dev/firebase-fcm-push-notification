@@ -17,11 +17,10 @@ import kotlinx.android.synthetic.main.activity_sign_up.*
 
 class SignUpActivity : AppCompatActivity() {
 
-    private var mAuth: FirebaseAuth? = null
-    private var user: User? = null
-    var database: FirebaseDatabase? = null
-
-    private var userToken: String? = null
+    private lateinit var mAuth: FirebaseAuth
+    private lateinit var user: User
+    private lateinit var database: FirebaseDatabase
+    private lateinit var userToken: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,7 +28,7 @@ class SignUpActivity : AppCompatActivity() {
 
         mAuth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance()
-        val userRef = database!!.getReference("user")
+        val userRef = database.getReference("user")
         user = User()
 
 
@@ -68,7 +67,7 @@ class SignUpActivity : AppCompatActivity() {
                 }
 
                 // Get new FCM registration token
-                userToken = task.result
+                userToken = task.result.toString()
 
                 Log.d(TAG, "Token: $userToken")
 
@@ -82,16 +81,16 @@ class SignUpActivity : AppCompatActivity() {
 
 
 
-            mAuth!!.createUserWithEmailAndPassword(email, password)
+            mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         Log.d(TAG, "Auth: started")
-                        val firebaseUser = mAuth!!.currentUser
-                        user!!.name = name
-                        user!!.email = email
-                        user!!.id = firebaseUser.uid
-                        user!!.password = password
-                        user!!.token = userToken
+                        val firebaseUser = mAuth.currentUser
+                        user.name = name
+                        user.email = email
+                        user.id = firebaseUser.uid
+                        user.password = password
+                        user.token = userToken
 
 
                         userRef.child(firebaseUser.uid).setValue(user)
